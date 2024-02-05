@@ -15,5 +15,9 @@ contract Exo1 {
     function getBalance(address _address) public view returns (uint256) {
         return _address.balance;
     }
-}
 
+    function transferEth(address _address) public payable {
+        require(msg.value > 0, "Amount must be greater than 0");
+        payable(_address).transfer(msg.value);
+    }
+}
