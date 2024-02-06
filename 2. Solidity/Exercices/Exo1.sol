@@ -34,4 +34,5 @@ contract Exo1 {
         require(amount > 0, "Amount must be greater than 0");
         payable(storedAddress).transfer(amount);
     }
+
 }
