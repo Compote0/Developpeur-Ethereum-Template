@@ -24,6 +24,13 @@ WorkflowStatusChange : Pour indiquer le changement d’état du vote.
 ProposalRegistered : Pour enregistrer une nouvelle proposition.
 Voted : Pour enregistrer un vote.
 
+- L’administrateur peut ajouter des électeurs à la liste blanche avec une fonction registerVoter.
+- L’administrateur peut démarrer et terminer la session d’enregistrement des propositions.
+- Les électeurs inscrits peuvent soumettre des propositions avec la fonction registerProposal.
+- Ils peuvent ensuite voter pour leur proposition préférée avec la fonction vote.
+- L’administrateur met fin à la session de vote avec la fonction endVotingSession, qui détermine la proposition gagnante.
+- La fonction getWinner permet de récupérer l’ID
+
 */
 
 
@@ -74,5 +81,10 @@ contract Voting is Ownable {
         _;
     }
 
+    function registerVoter(address voterAddress) external onlyInStatus(WorkflowStatus.RegisteringVoters) {
+        require(!voters[voterAddress].isRegistered, "Voter already registered");
+        voters[voterAddress].isRegistered = true;
+        emit VoterRegistered(voterAddress);
+    }
 }
 
