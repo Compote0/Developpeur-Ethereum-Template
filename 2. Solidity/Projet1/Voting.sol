@@ -116,5 +116,16 @@ contract Voting is Ownable {
         emit WorkflowStatusChange(WorkflowStatus.VotingSessionStarted, WorkflowStatus.VotingSessionEnded);  
     }
 
+    function vote(uint256 _proposalId, address _voterAddress) external onlyOwner onlyInStatus(WorkflowStatus.VotingSessionStarted) {
+        require(currentStatus == WorkflowStatus.VotingSessionStarted, "Invalid workflow status");
+        require(!voters[_voterAddress].hasVoted, "Voter already voted");
+        require(proposals[_proposalId].voteCount < 10, "Proposal already voted");
+        voters[_voterAddress].hasVoted = true;
+        voters[_voterAddress].votedProposalId = _proposalId;
+        proposals[_proposalId].voteCount++;
+        emit Voted(_voterAddress, _proposalId);
+    }
+
+
 }
 
