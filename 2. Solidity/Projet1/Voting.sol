@@ -86,5 +86,12 @@ contract Voting is Ownable {
         voters[voterAddress].isRegistered = true;
         emit VoterRegistered(voterAddress);
     }
+
+    function registerProposal(string memory _description) external onlyInStatus(WorkflowStatus.ProposalsRegistrationStarted) {
+        proposals.push(Proposal(_description, 0));
+        emit ProposalRegistered(proposals.length - 1);
+    }
+
+
 }
 
