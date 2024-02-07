@@ -7,9 +7,19 @@ contract Whitelist {
     event Authorized(address _address);
     event EthReceived(address _address, uint _value);
 
+    constructor() {
+        whitelist[msg.sender]== true;
+    }
 
-    function authorize(address _address) public {
-        require(check(_address), "Wallet is not whitelisted");
+
+
+    modifier check() {
+        // require(whitelist[_address], "Wallet is not whitelisted"); <- vérifier n'importe quelle adresse spécifiée par l'utilisateur
+        require(whitelist[msg.sender]==true, "Wallet is not whitelisted"); // <- vérifier l'adresse de l'émetteur de la transaction
+        _;
+    }
+
+    function authorize(address _address) public check {
         whitelist[_address] = true;
         emit Authorized(_address);
     }
@@ -23,7 +33,9 @@ contract Whitelist {
         emit EthReceived(msg.sender, msg.value);
     }
 */
-    function check(address _address) private view returns (bool) {
-        return whitelist[_address];
-    }
+    // function check(address _address) private view returns (bool) {
+    //     return whitelist[_address];
+    // }
+
+
 }
