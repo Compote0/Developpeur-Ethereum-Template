@@ -1,36 +1,5 @@
 /* 
-- L’administrateur qui déploie le smart contract est celui qui gère le processus de vote.
-
-- Import “Ownable” d’OpenZeppelin pour gérer les droits d’administration.
-
-- Définir les structures de données suivantes :
-Voter : Contient des informations sur chaque électeur (inscrit, a voté, ID de la proposition votée).
-Proposal : Contient la description d’une proposition et le nombre de votes reçus.
-
-- Utiliser une énumération (WorkflowStatus) pour gérer les différents états du vote :
-Enregistrement des électeurs.
-Début de l’enregistrement des propositions.
-Fin de l’enregistrement des propositions.
-Début de la session de vote.
-Fin de la session de vote.
-Votes comptabilisés.
-
-- Définir un uint winningProposalId pour représenter l’ID de la proposition gagnante.
-/ créer une func getWinner qui retourne l’ID du gagnant.
-
-- Déclarer les événements suivants :
-VoterRegistered : Pour signaler l’inscription d’un électeur.
-WorkflowStatusChange : Pour indiquer le changement d’état du vote.
-ProposalRegistered : Pour enregistrer une nouvelle proposition.
-Voted : Pour enregistrer un vote.
-
-- L’administrateur peut ajouter des électeurs à la liste blanche avec une fonction registerVoter.
-- L’administrateur peut démarrer et terminer la session d’enregistrement des propositions.
-- Les électeurs inscrits peuvent soumettre des propositions avec la fonction registerProposal.
-- Ils peuvent ensuite voter pour leur proposition préférée avec la fonction vote.
-- L’administrateur met fin à la session de vote avec la fonction endVotingSession, qui détermine la proposition gagnante.
-- La fonction getWinner permet de récupérer l’ID
-
+Rajout de fonctionnalités au contrat Voting : délégation de vote
 */
 
 
@@ -39,7 +8,7 @@ pragma solidity 0.8.24;
 
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
-contract Voting is Ownable {
+contract VotingPlus is Ownable {
     enum WorkflowStatus {
         RegisteringVoters,
         ProposalsRegistrationStarted,
@@ -59,6 +28,16 @@ contract Voting is Ownable {
         string description;
         uint voteCount;
     }
+
+    // Nouvelle structure de données pour stocker les délégations de vote
+    struct Delegation {
+        bool hasDelegated;
+        address delegate;
+    }
+
+    // Nouveau mapping pour les délégations de vote
+    mapping(address => Delegation) public voteDelegations;
+
 
     WorkflowStatus public currentStatus;
     uint public winningProposalId;
@@ -116,10 +95,26 @@ contract Voting is Ownable {
         emit WorkflowStatusChange(WorkflowStatus.VotingSessionStarted, WorkflowStatus.VotingSessionEnded);  
     }
 
-    function vote(uint256 _proposalId, address _voterAddress) external onlyOwner onlyInStatus(WorkflowStatus.VotingSessionStarted) {
-        require(currentStatus == WorkflowStatus.VotingSessionStarted, "Invalid workflow status");
+    // Fonction pour permettre aux électeurs inscrits de déléguer leur vote
+    function delegateVote(address _delegate) external {
+        require(voters[msg.sender].isRegistered, "Voter not registered");
+        require(_delegate != msg.sender, "Cannot delegate to yourself");
+        require(!voteDelegations[msg.sender].hasDelegated, "Vote already delegated");
+
+        voteDelegations[msg.sender] = Delegation(true, _delegate);
+    }
+
+    // Modifier la fonction de vote pour prendre en compte les votes délégués
+    function vote(uint256 _proposalId) external onlyInStatus(WorkflowStatus.VotingSessionStarted) {
+        address _voterAddress = msg.sender;
+
+        if (voteDelegations[_voterAddress].hasDelegated) {
+            _voterAddress = voteDelegations[_voterAddress].delegate;
+        }
+
         require(!voters[_voterAddress].hasVoted, "Voter already voted");
         require(proposals[_proposalId].voteCount < 10, "Proposal already voted");
+
         voters[_voterAddress].hasVoted = true;
         voters[_voterAddress].votedProposalId = _proposalId;
         proposals[_proposalId].voteCount++;
