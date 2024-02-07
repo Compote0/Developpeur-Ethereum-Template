@@ -92,6 +92,29 @@ contract Voting is Ownable {
         emit ProposalRegistered(proposals.length - 1);
     }
 
+    function startProposalRegistration() external onlyOwner onlyInStatus(WorkflowStatus.RegisteringVoters) {
+        require(currentStatus == WorkflowStatus.RegisteringVoters, "Invalid workflow status");
+        currentStatus = WorkflowStatus.ProposalsRegistrationStarted;
+        emit WorkflowStatusChange(WorkflowStatus.RegisteringVoters, WorkflowStatus.ProposalsRegistrationStarted);
+    }
+
+    function endProposalRegistration() external onlyOwner onlyInStatus(WorkflowStatus.ProposalsRegistrationStarted) {
+        require(currentStatus == WorkflowStatus.ProposalsRegistrationStarted, "Invalid workflow status");
+        currentStatus = WorkflowStatus.ProposalsRegistrationEnded;
+        emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationStarted, WorkflowStatus.ProposalsRegistrationEnded);
+    }
+
+    function startVotingSession() external onlyOwner onlyInStatus(WorkflowStatus.ProposalsRegistrationEnded) {
+        require(currentStatus == WorkflowStatus.ProposalsRegistrationEnded, "Invalid workflow status");
+        currentStatus = WorkflowStatus.VotingSessionStarted;
+        emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationEnded, WorkflowStatus.VotingSessionStarted);
+    }
+    
+    function endVotingSession() external onlyOwner onlyInStatus(WorkflowStatus.VotingSessionStarted) {
+        require(currentStatus == WorkflowStatus.VotingSessionStarted, "Invalid workflow status");
+        currentStatus = WorkflowStatus.VotingSessionEnded;
+        emit WorkflowStatusChange(WorkflowStatus.VotingSessionStarted, WorkflowStatus.VotingSessionEnded);  
+    }
 
 }
 
