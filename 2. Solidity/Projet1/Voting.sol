@@ -126,6 +126,22 @@ contract Voting is Ownable {
         emit Voted(_voterAddress, _proposalId);
     }
 
+    function tallyVotes() external onlyOwner onlyInStatus(WorkflowStatus.VotingSessionEnded){
+        uint maxVotes = 0;
+        uint winningProposalId = 0;
+        for (uint i = 0; i < proposals.length; i++) {
+            if (proposals[i].voteCount > maxVotes) {
+                maxVotes = proposals[i].voteCount;
+                winningProposalId = i;
+            }
+        }
+        currentStatus = WorkflowStatus.VotesTallied;
+        emit WorkflowStatusChange(WorkflowStatus.VotingSessionEnded, currentStatus);
+    }
 
+    function getWinner() external view returns (uint) {
+        require(currentStatus == WorkflowStatus.VotesTallied, "Invalid workflow status");
+        return winningProposalId;
+    }
 }
 
