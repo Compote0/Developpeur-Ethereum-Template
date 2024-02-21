@@ -17,4 +17,10 @@ contract VotingTest is Test {
         assertEq(uint(initialStatus), uint(Voting.WorkflowStatus.RegisteringVoters), "Initial workflow status should be RegisteringVoters");
     }
 
+    function test_AddVoter() public {
+        voting.addVoter(address(this));
+        Voting.Voter memory voter = voting.getVoter(address(this));
+        assertTrue(voter.isRegistered, "Voter should be registered");
+    }
+
 }
