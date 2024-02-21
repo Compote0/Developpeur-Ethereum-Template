@@ -23,4 +23,11 @@ contract VotingTest is Test {
         assertTrue(voter.isRegistered, "Voter should be registered");
     }
 
+    function test_StartProposalsRegistering() public {
+        voting.startProposalsRegistering();
+        Voting.WorkflowStatus status = voting.workflowStatus();
+        assertEq(uint(status), uint(Voting.WorkflowStatus.ProposalsRegistrationStarted), "Workflow status should be ProposalsRegistrationStarted");
+    }
+
+
 }
