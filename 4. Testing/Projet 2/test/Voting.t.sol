@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 import "../src/Voting.sol";
@@ -10,6 +10,10 @@ contract VotingTest is Test {
 
     function setUp() public {
         voting = new Voting();
+    }
+
+    function test_ContractDeployment() public {
+        assertTrue(address(voting) != address(0), "Contract should be deployed");
     }
 
     function test_InitialWorkflowStatusIsRegisteringVoters() public {
@@ -28,6 +32,4 @@ contract VotingTest is Test {
         Voting.WorkflowStatus status = voting.workflowStatus();
         assertEq(uint(status), uint(Voting.WorkflowStatus.ProposalsRegistrationStarted), "Workflow status should be ProposalsRegistrationStarted");
     }
-
-
 }
