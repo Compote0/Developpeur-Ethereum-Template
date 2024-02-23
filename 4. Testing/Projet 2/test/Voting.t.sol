@@ -32,26 +32,34 @@ contract VotingTest is Test {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     
 
-    function test_AddVoter() public {
-        voting.addVoter(address(this));
-        Voting.Voter memory voter = voting.getVoter(address(this));
-        assertTrue(voter.isRegistered, "Voter should be registered");
+    function test_RevertWhen_AddVoterNotTheOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        vm.prank(nonOwner);
+
+        // Tentative d'ajouter un votant en tant que non-propriétaire, attendez-vous à ce que cela échoue
+        try voting.addVoter(nonOwner) {
+            revert("Should revert because caller is not the owner");
+        } catch {
+            // Test réussi si une exception est attrapée, indiquant que la fonction a bien réverti
+        }
     }
 
-    function test_AddVoterAlreadyRegistered() public {
+
+    function test_RevertWhen_AddVoterAlreadyRegistered() public {
         // Ajouter le votant une première fois
         voting.addVoter(address(this));
         assertTrue(voting.getVoter(address(this)).isRegistered, "Voter should be registered");
 
-        // Essayer d'ajouter le même votant à nouveau et vérifier que cela échoue
+        // Essayer d'ajouter le même votant à nouveau et vérifier que l'opération échoue avec une réversion attendue
         try voting.addVoter(address(this)) {
-            // Si l'ajout réussit, échouer le test
-            revert("Already registered");
+            // Si l'ajout réussit, cela signifie que le test a échoué car une réversion était attendue
+            revert("Should not allow adding an already registered voter");
         } catch Error(string memory reason) {
-            // Si l'ajout échoue avec le message d'erreur attendu, le test réussit
-            assertEq(reason, "Already registered", "Error message should be 'Already registered'");
+            // Vérifier que la réversion se produit pour la raison attendue, indiquant que le votant est déjà enregistré
+            assertEq(reason, "Already registered", "Should revert with 'Already registered' error message");
         }
     }
+
 
 
     function test_AddVoterNotOwner() public {
@@ -66,36 +74,75 @@ contract VotingTest is Test {
     }
 
 
-
-    function test_AddVoterWhenWorkflowStatusIsNotRegisteringVoters() public {
-        // Changer l'état du workflow
+    function test_RevertWhen_AddVoterWhenWorkflowStatusIsNotRegisteringVoters() public {
+        // Changer l'état du workflow pour ne plus être en RegisteringVoters
         voting.startProposalsRegistering();
         assertEq(uint(voting.workflowStatus()), uint(Voting.WorkflowStatus.ProposalsRegistrationStarted), "Workflow status should be ProposalsRegistrationStarted");
 
-        // Essayer d'ajouter un électeur alors que l'état du workflow n'est pas RegisteringVoters
-        (bool success,) = address(voting).call(abi.encodeWithSignature("addVoter(address)", address(this)));
-        bool addVoterFailed = !success;
-
-        // Vérifier que l'ajout d'électeur a échoué car l'état du workflow n'est pas RegisteringVoters
-        assertTrue(addVoterFailed, "Adding voter should fail when workflow status is not RegisteringVoters");
+        // Essayer d'ajouter un électeur et s'attendre à une réversion car l'état du workflow ne permet pas l'ajout
+        try voting.addVoter(address(this)) {
+            // Si l'appel ne révert pas, le test échoue
+            revert("Adding voter should revert when workflow status is not RegisteringVoters");
+        } catch Error(string memory reason) {
+            // Confirmer que la réversion est pour la raison attendue
+            assertEq(reason, "Voters registration is not open yet", "Revert reason should be 'Voters registration is not open yet'");
+        }
     }
 
 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    /*                      START PROPOSALS                       */
+    /*                     NOT OWNER                              */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    
 
-    function test_StartProposalsRegistering() public {
-        // Appeler la fonction startProposalsRegistering pour commencer l'enregistrement des propositions
+
+    function test_RevertWhen_StartProposalsRegisteringNotOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
+        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+
+        vm.prank(nonOwner);
+        
         voting.startProposalsRegistering();
-
-        // Obtenir le statut actuel du workflow après l'appel de la fonction startProposalsRegistering
-        Voting.WorkflowStatus status = voting.workflowStatus();
-
-        // Vérifier que le statut du workflow est bien ProposalsRegistrationStarted après l'appel de la fonction
-        assertEq(uint(status), uint(Voting.WorkflowStatus.ProposalsRegistrationStarted), "Workflow status should be ProposalsRegistrationStarted");
     }
 
+
+    function test_RevertWhen_EndProposalsRegisteringNotOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
+        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+
+        vm.prank(nonOwner);
+        
+        voting.endProposalsRegistering();
+    }
+
+    function test_RevertWhen_StartVotingSessionNotOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
+        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+
+        vm.prank(nonOwner);
+        
+        voting.startVotingSession();
+    }
+
+    function test_RevertWhen_EndVotingSessionNotOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
+        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+
+        vm.prank(nonOwner);
+        
+        voting.endVotingSession();
+    }
+
+    function test_RevertWhen_TallyVotesNotOwner() public {
+        address nonOwner = makeAddr("NonOwner");
+        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
+        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+
+        vm.prank(nonOwner);
+        voting.tallyVotes();
+    }
 
 }
