@@ -98,7 +98,7 @@ contract VotingTest is Test {
         string memory proposalDescription = "Proposal1";
 
         vm.expectEmit(true, true, true, true);
-        emit ProposalRegistered(1); // L'ID de proposition attendu est maintenant 1
+        emit ProposalRegistered(1); 
 
         voting.addProposal(proposalDescription);
 
@@ -106,6 +106,45 @@ contract VotingTest is Test {
         assertEq(proposal.description, proposalDescription, "Proposition doesn't match.");
         assertEq(proposal.voteCount, 0, "Number of votes should be 0");
         vm.stopPrank();
+    }
+
+
+    function test_RevertWhen_AttemptToVoteTooEarly() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1);
+        voting.startProposalsRegistering();
+        vm.stopPrank();
+
+        vm.prank(addr1);
+        voting.addProposal("Proposal 1");
+
+        vm.prank(owner);
+        voting.endProposalsRegistering();
+
+        vm.prank(addr1);
+        vm.expectRevert("Voting session havent started yet");
+        voting.setVote(0);
+    }
+
+    function test_RevertWhen_VoteTwiceNotAllowed() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1); 
+        voting.startProposalsRegistering(); 
+        vm.stopPrank();
+
+        vm.prank(addr1);
+        voting.addProposal("Proposal 1"); 
+
+        vm.startPrank(owner);
+        voting.endProposalsRegistering(); 
+        voting.startVotingSession(); 
+        vm.stopPrank();
+
+        vm.startPrank(addr1);
+        voting.setVote(0); 
+        vm.expectRevert("You have already voted");
+        voting.setVote(0); 
+        vm.stopPrank(); 
     }
 
 
