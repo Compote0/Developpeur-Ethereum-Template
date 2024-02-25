@@ -85,7 +85,7 @@ contract VotingTest is Test {
 
 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    /*                        PROPOSAL                            */
+    /*                        ADD PROPOSAL                        */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     
     function test_AddProposal_SuccessfullyByRegisteredVoter() public {
@@ -96,16 +96,18 @@ contract VotingTest is Test {
 
         vm.startPrank(addr1);
         string memory proposalDescription = "Proposal1";
+
+        vm.expectEmit(true, true, true, true);
+        emit ProposalRegistered(1); // L'ID de proposition attendu est maintenant 1
+
         voting.addProposal(proposalDescription);
 
-        Voting.Proposal memory proposal = voting.getOneProposal(0); 
+        Voting.Proposal memory proposal = voting.getOneProposal(1); 
         assertEq(proposal.description, proposalDescription, "Proposition doesn't match.");
         assertEq(proposal.voteCount, 0, "Number of votes should be 0");
         vm.stopPrank();
-
-        vm.expectEmit(true, true, true, true);
-        emit ProposalRegistered(0);
     }
+
 
 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -148,24 +150,24 @@ contract VotingTest is Test {
 
 
     function test_ExpectEmit_HasVotedSuccessfully() public {
-            vm.startPrank(owner);
-            voting.addVoter(addr1);
-            voting.startProposalsRegistering();
-            vm.stopPrank();
+        vm.startPrank(owner);
+        voting.addVoter(addr1);
+        voting.startProposalsRegistering();
+        vm.stopPrank();
 
-            vm.startPrank(addr1);
-            voting.addProposal("Proposal 1");
-            vm.stopPrank();
+        vm.startPrank(addr1);
+        voting.addProposal("Proposal 1");
+        vm.stopPrank();
 
-            vm.startPrank(owner);
-            voting.endProposalsRegistering();
-            voting.startVotingSession();
-            vm.stopPrank();
-            
-            vm.startPrank(addr1);
-            vm.expectEmit(true, false, false, true);
-            emit Voted(addr1, 0);
-            voting.setVote(0);
-            vm.stopPrank();
+        vm.startPrank(owner);
+        voting.endProposalsRegistering();
+        voting.startVotingSession();
+        vm.stopPrank();
+        
+        vm.startPrank(addr1);
+        vm.expectEmit(true, false, false, true);
+        emit Voted(addr1, 0);
+        voting.setVote(0);
+        vm.stopPrank();
     }
 }
