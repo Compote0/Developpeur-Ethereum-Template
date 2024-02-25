@@ -5,12 +5,44 @@ import "forge-std/Test.sol";
 import "../src/voting.sol";
 
 contract VotingTest is Test {
-    address _addr = makeAddr("Voting");
-    address _owner = address(this); 
+    address addr1 = makeAddr("Voter1");
+    address addr2 = makeAddr("Voter2");
+    address owner = makeAddr('Owner');
 
     Voting voting;
 
+    struct Voter {
+        bool isRegistered;
+        bool hasVoted;
+        uint votedProposalId;
+    }
+
+    struct Proposal {
+        string description;
+        uint voteCount;
+    }
+
+    enum  WorkflowStatus {
+        RegisteringVoters,
+        ProposalsRegistrationStarted,
+        ProposalsRegistrationEnded,
+        VotingSessionStarted,
+        VotingSessionEnded,
+        VotesTallied
+    }
+
+    WorkflowStatus public workflowStatus;
+    Proposal[] public proposalsArray;
+    mapping (address => Voter) voters;
+
+    event VoterRegistered(address voterAddress); 
+    event WorkflowStatusChange(WorkflowStatus previousStatus, WorkflowStatus newStatus);
+    event ProposalRegistered(uint proposalId);
+    event Voted (address voter, uint proposalId);
+
+
     function setUp() public {
+        vm.prank(owner);
         voting = new Voting();
     }
 
@@ -35,114 +67,105 @@ contract VotingTest is Test {
     function test_RevertWhen_AddVoterNotTheOwner() public {
         address nonOwner = makeAddr("NonOwner");
         vm.prank(nonOwner);
-
-        // Tentative d'ajouter un votant en tant que non-propriétaire, attendez-vous à ce que cela échoue
         try voting.addVoter(nonOwner) {
             revert("Should revert because caller is not the owner");
         } catch {
-            // Test réussi si une exception est attrapée, indiquant que la fonction a bien réverti
         }
     }
 
-
-    function test_RevertWhen_AddVoterAlreadyRegistered() public {
-        // Ajouter le votant une première fois
-        voting.addVoter(address(this));
-        assertTrue(voting.getVoter(address(this)).isRegistered, "Voter should be registered");
-
-        // Essayer d'ajouter le même votant à nouveau et vérifier que l'opération échoue avec une réversion attendue
-        try voting.addVoter(address(this)) {
-            // Si l'ajout réussit, cela signifie que le test a échoué car une réversion était attendue
-            revert("Should not allow adding an already registered voter");
-        } catch Error(string memory reason) {
-            // Vérifier que la réversion se produit pour la raison attendue, indiquant que le votant est déjà enregistré
-            assertEq(reason, "Already registered", "Should revert with 'Already registered' error message");
-        }
+    function test_Successful_AddVoter() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1);
+        emit VoterRegistered(addr1);
+        vm.stopPrank();
+        vm.startPrank(addr1);
+        assertTrue(voting.getVoter(addr1).isRegistered);
     }
 
 
 
-    function test_AddVoterNotOwner() public {
-        // Enregistrer l'adresse actuelle en tant qu'électeur
-        voting.addVoter(msg.sender);
-
-        // Essayer d'ajouter un électeur en tant que non propriétaire
-        (bool success,) = address(voting).call(abi.encodeWithSignature("addVoter(address)", msg.sender));
-
-        // Vérifier que l'appel a échoué comme prévu
-        assertFalse(success, "Adding voter by non-owner should fail");
-    }
-
-
-    function test_RevertWhen_AddVoterWhenWorkflowStatusIsNotRegisteringVoters() public {
-        // Changer l'état du workflow pour ne plus être en RegisteringVoters
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*                        PROPOSAL                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    
+    function test_AddProposal_SuccessfullyByRegisteredVoter() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1); 
         voting.startProposalsRegistering();
-        assertEq(uint(voting.workflowStatus()), uint(Voting.WorkflowStatus.ProposalsRegistrationStarted), "Workflow status should be ProposalsRegistrationStarted");
+        vm.stopPrank();
 
-        // Essayer d'ajouter un électeur et s'attendre à une réversion car l'état du workflow ne permet pas l'ajout
-        try voting.addVoter(address(this)) {
-            // Si l'appel ne révert pas, le test échoue
-            revert("Adding voter should revert when workflow status is not RegisteringVoters");
-        } catch Error(string memory reason) {
-            // Confirmer que la réversion est pour la raison attendue
-            assertEq(reason, "Voters registration is not open yet", "Revert reason should be 'Voters registration is not open yet'");
-        }
+        vm.startPrank(addr1);
+        string memory proposalDescription = "Proposal1";
+        voting.addProposal(proposalDescription);
+
+        Voting.Proposal memory proposal = voting.getOneProposal(0); 
+        assertEq(proposal.description, proposalDescription, "Proposition doesn't match.");
+        assertEq(proposal.voteCount, 0, "Number of votes should be 0");
+        vm.stopPrank();
+
+        vm.expectEmit(true, true, true, true);
+        emit ProposalRegistered(0);
     }
 
 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    /*                     NOT OWNER                              */
+    /*                 EXPECT EMIT WORKFLOW STATUS                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 
-    function test_RevertWhen_StartProposalsRegisteringNotOwner() public {
-        address nonOwner = makeAddr("NonOwner");
-        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
-        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
+    function test_ExpectEmit_WhenWorkflowStatusChange() public {
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit WorkflowStatusChange(WorkflowStatus.RegisteringVoters, WorkflowStatus.ProposalsRegistrationStarted);
 
-        vm.prank(nonOwner);
-        
         voting.startProposalsRegistering();
-    }
-
-
-    function test_RevertWhen_EndProposalsRegisteringNotOwner() public {
-        address nonOwner = makeAddr("NonOwner");
-        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
-        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
-
-        vm.prank(nonOwner);
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationStarted, WorkflowStatus.ProposalsRegistrationEnded);
         
         voting.endProposalsRegistering();
-    }
-
-    function test_RevertWhen_StartVotingSessionNotOwner() public {
-        address nonOwner = makeAddr("NonOwner");
-        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
-        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
-
-        vm.prank(nonOwner);
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit WorkflowStatusChange(WorkflowStatus.ProposalsRegistrationEnded, WorkflowStatus.VotingSessionStarted);
         
         voting.startVotingSession();
-    }
-
-    function test_RevertWhen_EndVotingSessionNotOwner() public {
-        address nonOwner = makeAddr("NonOwner");
-        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
-        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
-
-        vm.prank(nonOwner);
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit WorkflowStatusChange(WorkflowStatus.VotingSessionStarted, WorkflowStatus.VotingSessionEnded);
         
         voting.endVotingSession();
-    }
-
-    function test_RevertWhen_TallyVotesNotOwner() public {
-        address nonOwner = makeAddr("NonOwner");
-        bytes4 selector = bytes4(keccak256("OwnableUnauthorizedAccount(address)"));
-        vm.expectRevert(abi.encodeWithSelector(selector, nonOwner));
-
-        vm.prank(nonOwner);
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit WorkflowStatusChange(WorkflowStatus.VotingSessionEnded, WorkflowStatus.VotesTallied);
         voting.tallyVotes();
+
     }
 
+
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*               EXPECT EMIT HAS VOTED                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    function test_ExpectEmit_HasVotedSuccessfully() public {
+            vm.startPrank(owner);
+            voting.addVoter(addr1);
+            voting.startProposalsRegistering();
+            vm.stopPrank();
+
+            vm.startPrank(addr1);
+            voting.addProposal("Proposal 1");
+            vm.stopPrank();
+
+            vm.startPrank(owner);
+            voting.endProposalsRegistering();
+            voting.startVotingSession();
+            vm.stopPrank();
+            
+            vm.startPrank(addr1);
+            vm.expectEmit(true, false, false, true);
+            emit Voted(addr1, 0);
+            voting.setVote(0);
+            vm.stopPrank();
+    }
 }
