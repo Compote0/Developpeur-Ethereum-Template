@@ -57,8 +57,6 @@ contract VotingTest is Test {
     }
 
 
-
-
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
     /*                      REGISTERING VOTERS                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -157,8 +155,8 @@ contract VotingTest is Test {
 
     function test_RevertWhen_ProposalDescriptionIsEmpty() public {
         vm.startPrank(owner);
-        voting.addVoter(addr1); // `voter` est l'adresse de l'électeur
-        voting.startProposalsRegistering(); // Suppose qu'il s'agit de la fonction pour passer à l'état `ProposalsRegistrationStarted`.
+        voting.addVoter(addr1); 
+        voting.startProposalsRegistering();
         vm.stopPrank();
 
         vm.startPrank(addr1); 
@@ -166,7 +164,6 @@ contract VotingTest is Test {
         voting.addProposal("");
         vm.stopPrank();
     }
-
 
 
 
