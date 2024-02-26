@@ -82,6 +82,14 @@ contract VotingTest is Test {
         assertTrue(voting.getVoter(addr1).isRegistered);
     }
 
+    function test_RevertWhen_RegisterVoterTwice() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1); 
+        vm.expectRevert(bytes("Already registered"));
+        voting.addVoter(addr1); 
+        vm.stopPrank();
+    }
+
 
 
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
