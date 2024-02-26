@@ -17,6 +17,7 @@ Puis, pour finir, deux fonction ExpectEmit : l'une pour tester que les evenement
 
 Pour les détails des commandes, j'ai utilisé forge test -vvvv, forge coverage et forge coverage --report lcov pour avoir le fichier de coverage, et savoir les branches qui n'ont pas été testées.
 
+
 voici ce que je n'ai pas réussi à tester pour avoir 100% (le lcov est dans ce dossier): 
 
 Branches:
@@ -32,3 +33,10 @@ BRDA:92,6,0,-
 
 Lines:
 DA:139,0
+
+| File                                                    | % Lines        | % Statements   | % Branches     | % Funcs         |
+|---------------------------------------------------------|----------------|----------------|----------------|-----------------|
+| node_modules/@openzeppelin/contracts/access/Ownable.sol | 30.00% (3/10)  | 38.46% (5/13)  | 50.00% (2/4)   | 20.00% (1/5)    |
+| node_modules/@openzeppelin/contracts/utils/Context.sol  | 33.33% (1/3)   | 33.33% (1/3)   | 100.00% (0/0)  | 33.33% (1/3)    |
+| src/voting.sol                                          | 97.62% (41/42) | 97.73% (43/44) | 65.38% (17/26) | 100.00% (10/10) |
+| Total                                                   | 81.82% (45/55) | 81.67% (49/60) | 63.33% (19/30) | 66.67% (12/18)  |
