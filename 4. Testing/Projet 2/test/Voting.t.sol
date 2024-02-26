@@ -225,4 +225,45 @@ contract VotingTest is Test {
         voting.setVote(0);
         vm.stopPrank();
     }
+
+    
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /*                     TALLY VOTES                            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+    function test_WinningProposalIDIsCorrectAfterTallyVotes() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1);
+        voting.addVoter(addr2);
+        voting.startProposalsRegistering();
+        vm.stopPrank();
+
+        string memory proposal1Description = "Proposal 1";
+        string memory proposal2Description = "Proposal 2";
+        vm.prank(addr1);
+        voting.addProposal(proposal1Description);
+        vm.prank(addr2);
+        voting.addProposal(proposal2Description);
+        vm.startPrank(owner);
+        voting.endProposalsRegistering();
+        voting.startVotingSession();
+        vm.stopPrank();
+
+        vm.prank(addr1);
+        voting.setVote(0); 
+
+        vm.prank(addr2);
+        voting.setVote(1);
+
+        vm.startPrank(owner);
+        voting.endVotingSession();
+        
+        voting.tallyVotes();
+        uint winningProposalID = voting.winningProposalID();
+
+        assertEq(winningProposalID, 0, "The winning proposal ID should be 1.");
+    }
+
+
 }

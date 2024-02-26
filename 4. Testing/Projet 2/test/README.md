@@ -12,7 +12,9 @@ Ensuite, en suivant les exemples de Ben sur foundry, j'ai fait des test RevertWh
 - et un test qui revert quand le voteur submit deux fois un vote
 - et pour finir un test qui revert quand le voteur submit un vote vide
 
-Puis, pour finir, deux fonction ExpectEmit : l'une pour tester que les evenements de changement de workflow status fonctionnent bien, et l'autre pour tester si l'evenement fonctionne bien quand quelquun vote avec succès.
+Puis, deux fonction ExpectEmit : l'une pour tester que les evenements de changement de workflow status fonctionnent bien, et l'autre pour tester si l'evenement fonctionne bien quand quelquun vote avec succès.
+
+Enfin, j'essaie de faire une fonction qui va tester si le proposal id gagnant est le bon. Je veux essayer de tester la line 139 pour faire 100% de test.
 
 
 Pour les détails des commandes, j'ai utilisé forge test -vvvv, forge coverage et forge coverage --report lcov pour avoir le fichier de coverage, et savoir les branches qui n'ont pas été testées.
