@@ -20,25 +20,13 @@ Enfin, j'essaie de faire une fonction qui va tester si le proposal id gagnant es
 Pour les détails des commandes, j'ai utilisé forge test -vvvv, forge coverage et forge coverage --report lcov pour avoir le fichier de coverage, et savoir les branches qui n'ont pas été testées.
 
 
-voici ce que je n'ai pas réussi à tester pour avoir 100% (le lcov est dans ce dossier): 
+Les branches restantes que je n'ai pas réussi à tester sont dans le fichier lcov de ce dossier.
+Résultat des tests : 
 
-Branches:
-BRDA:65,0,0,-
-BRDA:76,2,0,-
-BRDA:105,7,0,-
-BRDA:116,8,0,-
-BRDA:122,9,0,-
-BRDA:128,10,0,-
-BRDA:135,11,0,-
-BRDA:138,12,0,-
-BRDA:92,6,0,-
 
-Lines:
-DA:139,0
-
-| File                                                    | % Lines        | % Statements   | % Branches     | % Funcs         |
-|---------------------------------------------------------|----------------|----------------|----------------|-----------------|
-| node_modules/@openzeppelin/contracts/access/Ownable.sol | 30.00% (3/10)  | 38.46% (5/13)  | 50.00% (2/4)   | 20.00% (1/5)    |
-| node_modules/@openzeppelin/contracts/utils/Context.sol  | 33.33% (1/3)   | 33.33% (1/3)   | 100.00% (0/0)  | 33.33% (1/3)    |
-| src/voting.sol                                          | 97.62% (41/42) | 97.73% (43/44) | 65.38% (17/26) | 100.00% (10/10) |
-| Total                                                   | 81.82% (45/55) | 81.67% (49/60) | 63.33% (19/30) | 66.67% (12/18)  |
+| File                                                    | % Lines         | % Statements    | % Branches     | % Funcs         |
+|---------------------------------------------------------|-----------------|-----------------|----------------|-----------------|
+| node_modules/@openzeppelin/contracts/access/Ownable.sol | 30.00% (3/10)   | 38.46% (5/13)   | 50.00% (2/4)   | 20.00% (1/5)    |
+| node_modules/@openzeppelin/contracts/utils/Context.sol  | 33.33% (1/3)    | 33.33% (1/3)    | 100.00% (0/0)  | 33.33% (1/3)    |
+| src/voting.sol                                          | 100.00% (42/42) | 100.00% (44/44) | 69.23% (18/26) | 100.00% (10/10) |
+| Total                                                   | 83.64% (46/55)  | 83.33% (50/60)  | 66.67% (20/30) | 66.67% (12/18)  |

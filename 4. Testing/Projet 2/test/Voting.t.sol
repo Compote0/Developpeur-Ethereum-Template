@@ -7,6 +7,7 @@ import "../src/voting.sol";
 contract VotingTest is Test {
     address addr1 = makeAddr("Voter1");
     address addr2 = makeAddr("Voter2");
+    address addr3 = makeAddr("Voter3");
     address owner = makeAddr('Owner');
 
     Voting voting;
@@ -236,6 +237,7 @@ contract VotingTest is Test {
         vm.startPrank(owner);
         voting.addVoter(addr1);
         voting.addVoter(addr2);
+        voting.addVoter(addr3);
         voting.startProposalsRegistering();
         vm.stopPrank();
 
@@ -256,14 +258,15 @@ contract VotingTest is Test {
         vm.prank(addr2);
         voting.setVote(1);
 
+        vm.prank(addr3);
+        voting.setVote(1);
+
         vm.startPrank(owner);
         voting.endVotingSession();
         
         voting.tallyVotes();
         uint winningProposalID = voting.winningProposalID();
 
-        assertEq(winningProposalID, 0, "The winning proposal ID should be 1.");
+        assertEq(winningProposalID, 1, "The winning proposal ID should be 1.");
     }
-
-
 }
