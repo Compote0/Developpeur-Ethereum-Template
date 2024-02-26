@@ -155,11 +155,22 @@ contract VotingTest is Test {
         vm.stopPrank(); 
     }
 
+    function test_RevertWhen_ProposalDescriptionIsEmpty() public {
+        vm.startPrank(owner);
+        voting.addVoter(addr1); // `voter` est l'adresse de l'électeur
+        voting.startProposalsRegistering(); // Suppose qu'il s'agit de la fonction pour passer à l'état `ProposalsRegistrationStarted`.
+        vm.stopPrank();
+
+        vm.startPrank(addr1); 
+        vm.expectRevert(bytes("Vous ne pouvez pas ne rien proposer"));
+        voting.addProposal("");
+        vm.stopPrank();
+    }
 
 
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    /*                 EXPECT EMIT WORKFLOW STATUS                */
-    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+
 
 
     function test_ExpectEmit_WhenWorkflowStatusChange() public {
